@@ -20,7 +20,9 @@ function register_create_ecpay_payment_order_endpoint() {
 		array(
 			'methods'             => 'POST',
 			'callback'            => 'create_ecpay_payment_order',
-			'permission_callback' => '__return_true',
+			'permission_callback' => function () {
+				return current_user_can( 'manage_woocommerce' ); // 限制存取，需帶金鑰
+			},
 		)
 	);
 }
