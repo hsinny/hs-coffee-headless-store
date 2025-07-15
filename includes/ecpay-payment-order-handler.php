@@ -15,53 +15,39 @@ function ecpay_log_in_headless( $content, $code = '', $order_id = '' ) {
 	return $logger->log( $content, $code, $order_id );
 }
 
+function create_rest_response( $code, $message, $status ) {
+	return new WP_REST_Response(
+		array(
+			'code'    => $code,
+			'message' => $message,
+			'data'    => array(
+				'status' => $status,
+			),
+		),
+		$status
+	);
+}
+
 function create_ecpay_payment_order( $request ) {
 	$payment_helper = new Wooecpay_Payment_Helper();
 
 	// 檢查訂單是否存在
-	$order_id = $request->get_param( 'order_id' );
+	$order_id = intval( $request->get_param( 'order_id' ) ); // 加上清理輸入資料
 	$order    = wc_get_order( $order_id );
 	if ( ! $order ) {
-		return new WP_REST_Response(
-			array(
-				'code'    => 'order_not_found',
-				'message' => '找不到訂單',
-				'data'    => array(
-					'status' => 404,
-				),
-			),
-			404
-		);
+		create_rest_response( 'order_not_found', '找不到訂單', 404 );
 	}
 
 	// 驗證 order_key 是否符合該訂單（避免偽造）
 	$order_key = sanitize_text_field( $request->get_param( 'order_key' ) );
 	if ( $order->get_order_key() !== $order_key ) {
-		return new WP_REST_Response(
-			array(
-				'code'    => 'order_verify_failed',
-				'message' => '訂單驗證失敗',
-				'data'    => array(
-					'status' => 403,
-				),
-			),
-			403
-		);
+		create_rest_response( 'order_verify_failed', '訂單驗證失敗', 403 );
 	}
 
 	// 檢查付款狀態
 	$payment_status = $order->get_status();
 	if ( 'processing' === $payment_status || 'completed' === $payment_status ) {
-		return new WP_REST_Response(
-			array(
-				'code'    => 'order_been_paid',
-				'message' => '訂單已付款',
-				'data'    => array(
-					'status' => 409,
-				),
-			),
-			409
-		);
+		create_rest_response( 'order_been_paid', '訂單已付款', 409 );
 	}
 
 	ecpay_log_in_headless( '前往付款(Headless)', 'A00001', $order_id );
