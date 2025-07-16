@@ -57,12 +57,13 @@ function create_ecpay_payment_order( $request ) {
 	$item_name         = $payment_helper->get_item_name( $order );
 
 	$hostname = $_SERVER['HTTP_HOST'];
+	$client_back_url_path = '/checkout/order-received/' . $order_id . '/?order_key=' . $order_key . '&billing_email=' . $order->get_billing_email();
 	if ( strpos( $hostname, 'localhost' ) !== false ) {
-		$return_url      = 'https://e980-2001-b011-9806-7ccc-f875-a21e-1641-b915.ngrok-free.app/wc-api/wooecpay_payment_callback/';
-		$client_back_url = 'https://localhost:5173/checkout/order-received/' . $order_id . '/?order_key=' . $order_key;
+		$return_url      = 'https://0d6575e7ef21.ngrok-free.app/wc-api/wooecpay_payment_callback/';
+		$client_back_url = 'https://localhost:5173' . $client_back_url_path;
 	} else {
 		$return_url      = WC()->api_request_url( 'wooecpay_payment_callback', true );
-		$client_back_url = 'https://yuancoffee.com/checkout/order-received/' . $order_id . '/?order_key=' . $order_key;
+		$client_back_url = 'https://yuancoffee.com' . $client_back_url_path;
 	}
 
 	// 紀錄訂單其他資訊
