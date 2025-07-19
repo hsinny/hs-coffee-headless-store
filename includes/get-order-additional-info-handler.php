@@ -69,8 +69,6 @@ function fetch_order_data( $order_id, $request ) {
 		'customer_note'        => $response_data['customer_note'],
 		'transaction_id'       => $response_data['transaction_id'],
 		'date_created'         => $response_data['date_created'],
-		'payment_method'       => $response_data['payment_method'],
-		'payment_method_title' => $response_data['payment_method_title'],
 		'date_paid'            => $response_data['date_paid'],
 		'date_completed'       => $response_data['date_completed'],
 		'refunds'              => $response_data['refunds'],
@@ -84,6 +82,27 @@ function fetch_order_data( $order_id, $request ) {
 			$response_data['shipping_lines']
 		),
 	);
-	
+
+	// Payment
+	$data['payment_method'] = array(
+		'method_id'    => $response_data['payment_method'],
+		'method_title' => $response_data['payment_method_title'],
+	);
+
+	// 銀行轉帳
+	if ( 'bacs' === $response_data['payment_method'] ) {
+		$bank_accounts = get_option( 'woocommerce_bacs_accounts' );
+
+		if ( ! empty( $bank_accounts ) && is_array( $bank_accounts ) ) {
+			$first_account = reset( $bank_accounts );
+
+			$data['payment_method']['bank_detail'] = array(
+				'bank_name'      => $first_account['bank_name'] ?? '',
+				'account_number' => $first_account['account_number'] ?? '',
+				'account_name'   => $first_account['account_name'] ?? '',
+			);
+		}
+	}
+
 	return new WP_REST_Response( $data, 200 );
 }
