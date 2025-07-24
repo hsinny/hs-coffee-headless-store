@@ -5,28 +5,11 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
+require_once plugin_dir_path( __DIR__ ) . '/includes/helpers.php';
+
 use Ecpay\Sdk\Exceptions\RtnException;
 use Ecpay\Sdk\Factories\Factory;
 use Helpers\Payment\Wooecpay_Payment_Helper;
-use Helpers\Logger\Wooecpay_Logger;
-
-function ecpay_log_in_headless( $content, $code = '', $order_id = '' ) {
-	$logger = new Wooecpay_Logger();
-	return $logger->log( $content, $code, $order_id );
-}
-
-function create_rest_response( $code, $message, $status ) {
-	return new WP_REST_Response(
-		array(
-			'code'    => $code,
-			'message' => $message,
-			'data'    => array(
-				'status' => $status,
-			),
-		),
-		$status
-	);
-}
 
 function create_ecpay_payment_order( $request ) {
 	$payment_helper = new Wooecpay_Payment_Helper();
