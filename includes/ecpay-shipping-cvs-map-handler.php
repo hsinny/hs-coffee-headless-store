@@ -22,8 +22,9 @@ use Helpers\Logistic\Wooecpay_Logistic_Helper;
 function generate_ecpay_map_form_for_headless( $request ) {
 	$order_id = intval( $request->get_param( 'order_id' ) );
 	$order    = wc_get_order( $order_id );
+	$client_back_url = $request->get_param( 'client_back_url' );
 
-	if ( ! $order_id ) {
+	if ( ! $order_id || ! $client_back_url ) {
 		return create_rest_response( 'missing_params', '請提供正確的欄位資料', 400 );
 	}
 
@@ -45,11 +46,20 @@ function generate_ecpay_map_form_for_headless( $request ) {
 	ecpay_log_in_headless( '物流方式-' . print_r( $shipping_method_id, true ), 'A00002', $order_id );
 
 	$api_logistic_info = $logistic_helper->get_ecpay_logistic_api_info( 'map' );
-	$client_back_url   = $logistic_helper->get_permalink( WC()->api_request_url( 'headless_wooecpay_logistic_map_callback', true ) );
+	$server_reply_url  = $logistic_helper->get_permalink( WC()->api_request_url( 'headless_wooecpay_logistic_map_callback', true ) );
 	// WP Endpoint eg. https://wp.domain/wc-api/wooecpay_logistic_map_callback/?has_block=true
 
 	$merchant_trade_no = $logistic_helper->get_merchant_trade_no( $order->get_id(), get_option( 'wooecpay_logistic_order_prefix' ) );
 	$logistics_type    = $logistic_helper->get_logistics_sub_type( $shipping_method_id );
+
+	$extra_data = json_encode(
+		array(
+			'order_id '         => $order_id,
+			'client_back_url'   => $client_back_url,
+			'shipping_rate_id'  => $request->get_param( 'shipping_rate_id' ),
+			'payment_method_id' => $request->get_param( 'payment_method_id' ),
+		)
+	);
 
 	try {
 
@@ -69,7 +79,8 @@ function generate_ecpay_map_form_for_headless( $request ) {
 			'LogisticsType'    => $logistics_type['type'],
 			'LogisticsSubType' => $logistics_type['sub_type'],
 			'IsCollection'     => 'Y',
-			'ServerReplyURL'   => $client_back_url,
+			'ServerReplyURL'   => $server_reply_url,
+			'ExtraData'        => $extra_data, // 供廠商傳遞保留的資訊，在回傳 response 參數中，會原值回傳
 		);
 
 		ecpay_log_in_headless( '轉導電子地圖(Headless) ' . print_r( $input, true ), 'A00003', $order_id );
