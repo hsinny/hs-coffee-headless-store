@@ -20,8 +20,8 @@ use Helpers\Logistic\Wooecpay_Logistic_Helper;
  * @return WP_REST_Response
  */
 function generate_ecpay_map_form_for_headless( $request ) {
-	$order_id = intval( $request->get_param( 'order_id' ) );
-	$order    = wc_get_order( $order_id );
+	$order_id        = intval( $request->get_param( 'order_id' ) );
+	$order           = wc_get_order( $order_id );
 	$client_back_url = $request->get_param( 'client_back_url' );
 
 	if ( ! $order_id || ! $client_back_url ) {
@@ -103,4 +103,119 @@ function generate_ecpay_map_form_for_headless( $request ) {
 			500
 		);
 	}
+}
+
+/**
+ * 註冊自定義 WooCommerce API Endpoint
+ *
+ * 綠界回傳超商地圖門市選擇結果，並轉導到 headless 前台
+ * Endpoint: https://wp.domain/wc-api/headless_wooecpay_logistic_map_callback
+ *
+ * 邏輯參考
+ * ecpay-ecommerce-for-woocommerce/includes/services/payment/ecpay-gateway-base.php
+ * function receipt_page ()
+ */
+add_action( 'woocommerce_api_headless_wooecpay_logistic_map_callback', 'cvs_map_response_for_handless' );
+
+function cvs_map_response_for_handless() {
+	// 客製轉導回前台 url
+	$extra_data      = json_decode( stripslashes( $_POST['ExtraData'] ), true );
+	$client_back_url = isset( $extra_data['client_back_url'] ) ? $extra_data['client_back_url'] : ''; // 前端傳遞的 url
+
+	// 驗證綠界回傳的 response 參數
+	if ( ! isset( $_POST['MerchantTradeNo'] ) ) {
+		cvs_store_selection_error_redirect( $client_back_url, 'cvs_store_selection_failed', 502 );
+	}
+
+	// 根據 MerchantTradeNo 獲取對應的 WooCommerce 訂單 ID
+	$logistic_helper = new Wooecpay_Logistic_Helper();
+	$order_id        = $logistic_helper->get_order_id_by_merchant_trade_no( $_POST );
+	$order           = wc_get_order( $order_id );
+
+	ecpay_log_in_headless( '選擇超商結果回傳(Headless) ' . print_r( $_POST, true ), 'B00005', $order_id );
+
+	if ( $order = wc_get_order( $order_id ) ) {
+		// 物流相關程序
+		$shipping_methods   = $order->get_items( 'shipping' );
+		$shipping_method    = reset( $shipping_methods );
+		$shipping_method_id = $shipping_method->get_method_id();
+
+		// 判斷是否為超商取貨
+		if ( $logistic_helper->is_ecpay_cvs_logistics( $shipping_method_id ) ) {
+			// 判斷是否有回傳資訊
+			if ( isset( $_POST['CVSStoreID'] ) ) {
+
+				// 是否啟用超商離島物流
+				if ( in_array( 'Wooecpay_Logistic_CVS_711', get_option( 'wooecpay_enabled_logistic_outside', array() ) ) ) {
+
+					// 門市檢查
+					$is_valid = $logistic_helper->check_cvs_is_valid( $shipping_method_id, $_POST['CVSOutSide'] );
+					if ( ! $is_valid ) {
+						cvs_store_selection_error_redirect( $client_back_url, 'cvs_store_selection_invalid', 400 );
+					}
+				}
+
+				$CVSStoreID   = sanitize_text_field( $_POST['CVSStoreID'] );
+				$CVSStoreName = sanitize_text_field( $_POST['CVSStoreName'] );
+				$CVSAddress   = sanitize_text_field( $_POST['CVSAddress'] );
+				$CVSTelephone = sanitize_text_field( $_POST['CVSTelephone'] );
+
+				// 驗證 (限制字串長度，避免超出預期範圍)
+				if ( mb_strlen( $CVSStoreName, 'utf-8' ) > 10 ) {
+					$CVSStoreName = mb_substr( $CVSStoreName, 0, 10, 'utf-8' );
+				}
+				if ( mb_strlen( $CVSAddress, 'utf-8' ) > 60 ) {
+					$CVSAddress = mb_substr( $CVSAddress, 0, 60, 'utf-8' );
+				}
+				if ( strlen( $CVSTelephone ) > 20 ) {
+					$CVSTelephone = substr( $CVSTelephone, 0, 20 );
+				}
+				if ( strlen( $CVSStoreID ) > 10 ) {
+					$CVSStoreID = substr( $CVSTelephone, 0, 10 );
+				}
+
+				// 更新運送資料
+				$order->set_shipping_company( '' );
+				$order->set_shipping_address_2( '' );
+				$order->set_shipping_city( '' );
+				$order->set_shipping_state( '' );
+				$order->set_shipping_postcode( '' );
+				$order->set_shipping_address_1( $CVSAddress );
+
+				$order->update_meta_data( '_ecpay_logistic_cvs_store_id', $CVSStoreID );
+				$order->update_meta_data( '_ecpay_logistic_cvs_store_name', $CVSStoreName );
+				$order->update_meta_data( '_ecpay_logistic_cvs_store_address', $CVSAddress );
+				$order->update_meta_data( '_ecpay_logistic_cvs_store_telephone', $CVSTelephone );
+
+				// 自訂 meta (未用到)
+				$order->set_meta_data( '_chosen_shipping_rate_id', wc()->session->get( 'chosen_shipping_methods' ) );
+				$order->set_meta_data( '_chosen_payment_method_id', wc()->session->get( 'chosen_payment_method' ) );
+
+				$order->add_order_note( sprintf( __( 'CVS store %1$s (%2$s)', 'ecpay-ecommerce-for-woocommerce' ), $CVSStoreName, $CVSStoreID ) );
+
+				$order->save();
+			}
+		}
+	}
+
+	// 轉導回 Headless 前台
+	$redirect_headless_url = add_query_arg(
+		array(
+			'action'            => 'cvs_store_selection',
+			'status'            => 'success',
+			'cvs_store_id'      => $CVSStoreID,
+			'cvs_store_name'    => $CVSStoreName,
+			'cvs_store_address' => $CVSAddress,
+			'order_id'          => $order_id,
+			'shipping_rate_id'  => $extra_data['shipping_rate_id'],
+			'payment_method_id' => $extra_data['payment_method_id'],
+		),
+		$client_back_url
+	);
+
+	wp_redirect( $redirect_headless_url, 302 );
+}
+
+function cvs_store_selection_error_redirect( $redirect_headless_url, $error_code, $status_code ) {
+	wp_redirect( $redirect_headless_url . '/?action=cvs_store_selection&statue=error&error_code=' . $error_code . '&statusCode=' . $status_code, 302 );
 }
