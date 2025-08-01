@@ -56,8 +56,8 @@ function generate_ecpay_map_form_for_headless( $request ) {
 		array(
 			'order_id '         => $order_id,
 			'client_back_url'   => $client_back_url,
-			'shipping_rate_id'  => $request->get_param( 'shipping_rate_id' ),
 			'payment_method_id' => $request->get_param( 'payment_method_id' ),
+			'shipping_method_id' => $request->get_param( 'shipping_method_id' ),
 		)
 	);
 
@@ -188,7 +188,7 @@ function cvs_map_response_for_handless() {
 				$order->update_meta_data( '_ecpay_logistic_cvs_store_telephone', $CVSTelephone );
 
 				// 自訂 meta (未用到)
-				$order->set_meta_data( '_chosen_shipping_rate_id', wc()->session->get( 'chosen_shipping_methods' ) );
+				$order->set_meta_data( '_chosen_shipping_method_id', wc()->session->get( 'chosen_shipping_methods' ) );
 				$order->set_meta_data( '_chosen_payment_method_id', wc()->session->get( 'chosen_payment_method' ) );
 
 				$order->add_order_note( sprintf( __( 'CVS store %1$s (%2$s)', 'ecpay-ecommerce-for-woocommerce' ), $CVSStoreName, $CVSStoreID ) );
@@ -207,8 +207,8 @@ function cvs_map_response_for_handless() {
 			'cvs_store_name'    => $CVSStoreName,
 			'cvs_store_address' => $CVSAddress,
 			'order_id'          => $order_id,
-			'shipping_rate_id'  => $extra_data['shipping_rate_id'],
 			'payment_method_id' => $extra_data['payment_method_id'],
+			'shipping_method_id' => $extra_data['shipping_method_id'],
 		),
 		$client_back_url
 	);
