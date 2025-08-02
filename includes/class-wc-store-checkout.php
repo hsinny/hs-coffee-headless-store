@@ -13,6 +13,7 @@ class WC_Store_Checkout {
 		add_filter( 'woocommerce_default_address_fields', array( $this, 'headless_modify_default_address_fields' ), 10, 1 );
 		add_filter( 'rest_post_dispatch', array( $this, 'add_cvs_meta_data_to_draft_checkout_response' ), 10, 3 );
 		add_action( 'woocommerce_store_api_checkout_update_order_from_request', array( $this, 'headless_validate_order_fields' ), 10, 2 );
+		add_action( 'woocommerce_store_api_checkout_update_order_from_request', array( $this, 'headless_save_ecpay_logistic_fields' ), 10, 2 );
 	}
 
 	/**
@@ -142,6 +143,21 @@ class WC_Store_Checkout {
 					);
 				}
 			}
+		}
+	}
+
+	/**
+	 * 更新訂單中 ECPay 物流收件人手機欄位
+	 *
+	 * @param WC_Order $order   The WooCommerce order object.
+	 * @param array    $request The request data passed during the checkout process.
+	 *
+	 * @return void
+	 */
+	function headless_save_ecpay_logistic_fields( $order, $request ) {
+		$shipping_phone = $order->get_shipping_phone();
+		if ( ! empty( $shipping_phone ) ) {
+			$order->update_meta_data( 'wooecpay_shipping_phone', $shipping_phone );
 		}
 	}
 
