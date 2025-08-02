@@ -1,6 +1,8 @@
 <?php
 namespace HS_Coffee_Headless_Store;
 
+use Automattic\WooCommerce\StoreApi\Exceptions\RouteException;
+
 if ( ! defined( 'ABSPATH' ) ) {
 	exit; // 防止直接存取
 }
@@ -8,7 +10,30 @@ if ( ! defined( 'ABSPATH' ) ) {
 class WC_Store_Checkout {
 
 	public function __construct() {
+		add_filter( 'woocommerce_default_address_fields', array( $this, 'headless_modify_default_address_fields' ), 10, 1 );
 		add_filter( 'rest_post_dispatch', array( $this, 'add_cvs_meta_data_to_draft_checkout_response' ), 10, 3 );
+	}
+
+	/**
+	 * 修改 WooCommerce 結帳中的預設位址欄位。
+	 *
+	 * 調整特定位址欄位的必填狀態，
+	 * 使其在 WooCommerce 結帳流程中變成選用狀態，以便通過結帳欄位驗證
+	 */
+	function headless_modify_default_address_fields( $fields ) {
+		if ( isset( $fields['postcode'] ) ) {
+			$fields['postcode']['required'] = false;
+		}
+		if ( isset( $fields['city'] ) ) {
+			$fields['city']['required'] = false;
+		}
+		if ( isset( $fields['state'] ) ) {
+			$fields['state']['required'] = false;
+		}
+		if ( isset( $fields['address_1'] ) ) {
+			$fields['address_1']['required'] = false;
+		}
+		return $fields;
 	}
 
 	/**
