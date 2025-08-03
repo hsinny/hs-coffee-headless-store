@@ -100,6 +100,11 @@ function create_ecpay_payment_order( $request ) {
 
 		$generate_form = $auto_submit_form_service->generate( $input, $api_payment_info['action'] );
 
+		wc_load_cart();
+		if ( WC()->cart ) {
+			WC()->cart->empty_cart();
+		}
+
 		return new WP_REST_Response(
 			$generate_form,
 			200,
@@ -118,6 +123,4 @@ function create_ecpay_payment_order( $request ) {
 			500
 		);
 	}
-
-	// WC()->cart->empty_cart(); // to check
 }
