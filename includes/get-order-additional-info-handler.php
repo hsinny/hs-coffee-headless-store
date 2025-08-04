@@ -97,17 +97,7 @@ function fetch_order_data( $order_id, $request ) {
 
 	// 銀行轉帳
 	if ( 'bacs' === $response_data['payment_method'] ) {
-		$bank_accounts = get_option( 'woocommerce_bacs_accounts' );
-
-		if ( ! empty( $bank_accounts ) && is_array( $bank_accounts ) ) {
-			$first_account = reset( $bank_accounts );
-
-			$data['payment_method']['bank_detail'] = array(
-				'bank_name'      => $first_account['bank_name'] ?? '',
-				'account_number' => $first_account['account_number'] ?? '',
-				'account_name'   => $first_account['account_name'] ?? '',
-			);
-		}
+		$data['payment_method']['bank_detail'] = get_bank_details();
 	}
 
 	return new WP_REST_Response( $data, 200 );
@@ -145,4 +135,20 @@ function get_cvs_details( $response_data ) {
 		}
 	}
 	return $cvs_data;
+}
+
+function get_bank_details() {
+	$bank_accounts = get_option( 'woocommerce_bacs_accounts' );
+
+	if ( empty( $bank_accounts ) || ! is_array( $bank_accounts ) ) {
+		return array();
+	}
+
+	$first_account = reset( $bank_accounts );
+
+	return array(
+		'bank_name'      => $first_account['bank_name'] ?? '',
+		'account_number' => $first_account['account_number'] ?? '',
+		'account_name'   => $first_account['account_name'] ?? '',
+	);
 }
