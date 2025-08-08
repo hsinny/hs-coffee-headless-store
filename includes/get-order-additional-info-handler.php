@@ -83,6 +83,12 @@ function fetch_order_data( $order_id, $request ) {
 		),
 	);
 
+	// CVS 運送資訊
+	$shipping_method = reset( $data['shipping_methods'] );
+	if ( $shipping_method && strpos( $shipping_method['method_id'], 'Wooecpay_Logistic_CVS' ) !== false ) {
+		$data['shipping_methods'][0]['cvs_details'] = get_cvs_details( $response_data );
+	}
+
 	// Payment
 	$data['payment_method'] = array(
 		'method_id'    => $response_data['payment_method'],
@@ -91,18 +97,58 @@ function fetch_order_data( $order_id, $request ) {
 
 	// 銀行轉帳
 	if ( 'bacs' === $response_data['payment_method'] ) {
-		$bank_accounts = get_option( 'woocommerce_bacs_accounts' );
-
-		if ( ! empty( $bank_accounts ) && is_array( $bank_accounts ) ) {
-			$first_account = reset( $bank_accounts );
-
-			$data['payment_method']['bank_detail'] = array(
-				'bank_name'      => $first_account['bank_name'] ?? '',
-				'account_number' => $first_account['account_number'] ?? '',
-				'account_name'   => $first_account['account_name'] ?? '',
-			);
-		}
+		$data['payment_method']['bank_detail'] = get_bank_details();
 	}
 
 	return new WP_REST_Response( $data, 200 );
+}
+
+function get_cvs_details( $response_data ) {
+	if ( ! $response_data['meta_data'] ) {
+		return;
+	}
+	$meta_data = $response_data['meta_data'];
+
+	$cvs_data = array(
+		'cvs_store_id'       => '',
+		'cvs_store_name'     => '',
+		'cvs_store_address'  => '',
+		'cvs_receiver_phone' => '',
+		'cvs_receiver_name'  => $response_data['shipping']['last_name'] . $response_data['shipping']['first_name'],
+	);
+
+	foreach ( $meta_data as $meta ) {
+		$key = $meta->get_data()['key'];
+		switch ( $key ) {
+			case '_ecpay_logistic_cvs_store_id':
+				$cvs_data['cvs_store_id'] = $meta->value;
+				break;
+			case '_ecpay_logistic_cvs_store_name':
+				$cvs_data['cvs_store_name'] = $meta->value;
+				break;
+			case '_ecpay_logistic_cvs_store_address':
+				$cvs_data['cvs_store_address'] = $meta->value;
+				break;
+			case 'wooecpay_shipping_phone':
+				$cvs_data['cvs_receiver_phone'] = $meta->value;
+				break;
+		}
+	}
+	return $cvs_data;
+}
+
+function get_bank_details() {
+	$bank_accounts = get_option( 'woocommerce_bacs_accounts' );
+
+	if ( empty( $bank_accounts ) || ! is_array( $bank_accounts ) ) {
+		return array();
+	}
+
+	$first_account = reset( $bank_accounts );
+
+	return array(
+		'bank_name'      => $first_account['bank_name'] ?? '',
+		'account_number' => $first_account['account_number'] ?? '',
+		'account_name'   => $first_account['account_name'] ?? '',
+	);
 }
