@@ -11,10 +11,10 @@ deployment:
     - |
       if [ "$BRANCH" = "main" ]; then
         echo "🚀 Deploying to PRODUCTION site"
-        rsync -av --delete --exclude='.git' --exclude='.cpanel.yml' --exclude='.github/' ./ $PRODUCTION_PLUGIN_PATH
+        rsync -av --delete --exclude='.git' --exclude='.cpanel.yml' --exclude='.github/' --exclude='.env' ./ $PRODUCTION_PLUGIN_PATH
       elif [ "$BRANCH" = "develop" ]; then
         echo "🚧 Deploying to DEVELOPMENT site"
-        rsync -av --delete --exclude='.git' --exclude='.cpanel.yml' --exclude='.github/' ./ $DEVELOPMENT_PLUGIN_PATH
+        rsync -av --delete --exclude='.git' --exclude='.cpanel.yml' --exclude='.github/' --exclude='.env' ./ $DEVELOPMENT_PLUGIN_PATH
       else
         echo "❌ Branch not set for deployment: $BRANCH"
         exit 1
