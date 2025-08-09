@@ -1,0 +1,21 @@
+---
+deployment: 
+  tasks: 
+    # 載入 .env 文件中的變數
+    - export $(cat .env | xargs) 
+
+    # 獲取當前分支名稱 
+    - export BRANCH=$(git symbolic-ref --short HEAD)
+
+    # 根據分支名稱執行不同的部署邏輯
+    - |
+      if [ "$BRANCH" = "main" ]; then
+        echo "🚀 Deploying to PRODUCTION site"
+        rsync -av --delete --exclude='.git' --exclude='.cpanel.yml' --exclude='.github/' ./ $PRODUCTION_PLUGIN_PATH
+      elif [ "$BRANCH" = "develop" ]; then
+        echo "🚧 Deploying to DEVELOPMENT site"
+        rsync -av --delete --exclude='.git' --exclude='.cpanel.yml' --exclude='.github/' ./ $DEVELOPMENT_PLUGIN_PATH
+      else
+        echo "❌ Branch not set for deployment: $BRANCH"
+        exit 1
+      fi
