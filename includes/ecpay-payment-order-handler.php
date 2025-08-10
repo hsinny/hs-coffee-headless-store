@@ -39,15 +39,8 @@ function create_ecpay_payment_order( $request ) {
 	$merchant_trade_no = $payment_helper->get_merchant_trade_no( $order_id, get_option( 'wooecpay_payment_order_prefix' ) );
 	$item_name         = $payment_helper->get_item_name( $order );
 
-	$hostname = $_SERVER['HTTP_HOST'];
-	$client_back_url_path = '/checkout/order-received/' . $order_id . '/?order_key=' . $order_key . '&billing_email=' . $order->get_billing_email();
-	if ( strpos( $hostname, 'localhost' ) !== false ) {
-		$return_url      = 'https://0d6575e7ef21.ngrok-free.app/wc-api/wooecpay_payment_callback/';
-		$client_back_url = 'https://localhost:5173' . $client_back_url_path;
-	} else {
-		$return_url      = WC()->api_request_url( 'wooecpay_payment_callback', true );
-		$client_back_url = 'https://yuancoffee.com' . $client_back_url_path;
-	}
+	$return_url      = WC()->api_request_url( 'wooecpay_payment_callback', true );
+	$client_back_url = $request->get_param( 'client_back_url' );
 
 	// 紀錄訂單其他資訊
 	$order->update_meta_data( '_wooecpay_payment_order_prefix', get_option( 'wooecpay_payment_order_prefix' ) ); // 前綴
