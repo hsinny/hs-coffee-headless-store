@@ -14,10 +14,32 @@ if ( ! in_array( 'ecpay-ecommerce-for-woocommerce/ecpay-ecommerce-for-woocommerc
 require_once plugin_dir_path( __FILE__ ) . 'ecpay-payment-order-handler.php';
 require_once plugin_dir_path( __FILE__ ) . 'ecpay-shipping-cvs-map-handler.php';
 require_once plugin_dir_path( __FILE__ ) . 'get-order-additional-info-handler.php';
+require_once plugin_dir_path( __DIR__ ) . '/includes/helpers.php';
 
+add_action( 'rest_api_init', 'configure_cors_headers', 15 );
 add_action( 'rest_api_init', 'register_create_ecpay_payment_order_endpoint' );
 add_action( 'rest_api_init', 'register_ecpay_shipping_cvs_map_endpoint' );
 add_action( 'rest_api_init', 'register_get_order_additional_info_endpoint' );
+
+function configure_cors_headers() {
+	remove_filter( 'rest_pre_serve_request', 'rest_send_cors_headers' ); // 移掉預設
+	add_filter(
+		'rest_pre_serve_request',
+		function ( $value ) {
+			$origin        = get_http_origin();
+			$env_constants = get_site_env_constants();
+
+			if ( $origin === $env_constants['HEADLESS_SITE_DOMAIN'] ) {
+				header( 'Access-Control-Allow-Origin: ' . esc_url_raw( $origin ) );
+				header( 'Access-Control-Allow-Methods: OPTIONS, GET, POST, PUT, PATCH, DELETE' );
+				header( 'Access-Control-Allow-Credentials: true' );
+				header( 'Access-Control-Allow-Headers: Authorization, X-WP-Nonce, Content-Type, Cart-Token, Nonce, Content-Disposition, Content-MD5' );
+				header( 'Access-Control-Expose-Headers:  X-WP-Total, X-WP-TotalPages, Link, Cart-Token, Nonce' );
+			}
+			return $value;
+		}
+	);
+}
 
 function register_create_ecpay_payment_order_endpoint() {
 	register_rest_route(
