@@ -34,3 +34,26 @@ function get_selected_shipping_method_id( $order ) {
 	return $shipping_method_id;
 }
 
+function get_site_env_constants() {
+	$hostname           = $_SERVER['HTTP_HOST'];
+	$site_env_constants = array();
+
+	if ( 'yuancoffee.tw' === $hostname ) {
+		$site_env_constants = array(
+			'HEADLESS_SITE_DOMAIN' => 'https://shop.yuancoffee.tw',
+			'WP_SITE_DOMAIN'       => 'https://yuancoffee.tw',
+		);
+	} elseif ( strpos( $hostname, 'dev' ) !== false ) {
+		$site_env_constants = array(
+			'HEADLESS_SITE_DOMAIN' => 'https://dev-shop.yuancoffee.tw',
+			'WP_SITE_DOMAIN'       => 'https://dev-wp.yuancoffee.tw',
+		);
+	} else {
+		$site_env_constants = array(
+			'HEADLESS_SITE_DOMAIN' => 'https://localhost:5173',
+			'WP_SITE_DOMAIN'       => 'https://***.ngrok-free.app',
+		);
+	}
+
+	return $site_env_constants;
+}
