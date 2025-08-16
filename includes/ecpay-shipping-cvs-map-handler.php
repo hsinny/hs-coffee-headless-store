@@ -54,9 +54,9 @@ function generate_ecpay_map_form_for_headless( $request ) {
 
 	$extra_data = json_encode(
 		array(
-			'order_id '         => $order_id,
-			'client_back_url'   => $client_back_url,
-			'payment_method_id' => $request->get_param( 'payment_method_id' ),
+			'order_id '          => $order_id,
+			'client_back_url'    => $client_back_url,
+			'payment_method_id'  => $request->get_param( 'payment_method_id' ),
 			'shipping_method_id' => $request->get_param( 'shipping_method_id' ),
 		)
 	);
@@ -201,13 +201,13 @@ function cvs_map_response_for_handless() {
 	// 轉導回 Headless 前台
 	$redirect_headless_url = add_query_arg(
 		array(
-			'action'            => 'cvs_store_selection',
-			'status'            => 'success',
-			'cvs_store_id'      => $CVSStoreID,
-			'cvs_store_name'    => $CVSStoreName,
-			'cvs_store_address' => $CVSAddress,
-			'order_id'          => $order_id,
-			'payment_method_id' => $extra_data['payment_method_id'],
+			'action'             => 'cvs_store_selection',
+			'status'             => 'success',
+			'cvs_store_id'       => $CVSStoreID,
+			'cvs_store_name'     => $CVSStoreName,
+			'cvs_store_address'  => $CVSAddress,
+			'order_id'           => $order_id,
+			'payment_method_id'  => $extra_data['payment_method_id'],
 			'shipping_method_id' => $extra_data['shipping_method_id'],
 		),
 		$client_back_url

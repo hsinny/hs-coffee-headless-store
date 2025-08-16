@@ -42,20 +42,20 @@ function get_order_additional_info( $request ) {
 		return create_rest_response( 'order_fetch_failed', $response->get_error_message(), 500 );
 	}
 
-  return $response;
+	return $response;
 }
 
 /**
  * 使用 WooCommerce REST API 獲取訂單資料，自訂 response data
  *
- * @param int $order_id
+ * @param int             $order_id
  * @param WP_REST_Request $request
  * @return WP_REST_Response|WP_Error
  */
 function fetch_order_data( $order_id, $request ) {
 	$controller = new WC_REST_Orders_Controller();
-  $request->set_param( 'id', $order_id );
-  $response = $controller->get_item( $request );
+	$request->set_param( 'id', $order_id );
+	$response = $controller->get_item( $request );
 
 	if ( is_wp_error( $response ) ) {
 			return $response;
@@ -64,15 +64,15 @@ function fetch_order_data( $order_id, $request ) {
 	$response_data = $response->get_data();
 
 	$data = array(
-		'number'               => $response_data['number'],
-		'customer_id'          => $response_data['customer_id'],
-		'customer_note'        => $response_data['customer_note'],
-		'transaction_id'       => $response_data['transaction_id'],
-		'date_created'         => $response_data['date_created'],
-		'date_paid'            => $response_data['date_paid'],
-		'date_completed'       => $response_data['date_completed'],
-		'refunds'              => $response_data['refunds'],
-		'shipping_methods'     => array_map(
+		'number'           => $response_data['number'],
+		'customer_id'      => $response_data['customer_id'],
+		'customer_note'    => $response_data['customer_note'],
+		'transaction_id'   => $response_data['transaction_id'],
+		'date_created'     => $response_data['date_created'],
+		'date_paid'        => $response_data['date_paid'],
+		'date_completed'   => $response_data['date_completed'],
+		'refunds'          => $response_data['refunds'],
+		'shipping_methods' => array_map(
 			function ( $shipping ) {
 				return array(
 					'method_id'    => $shipping['method_id'],
