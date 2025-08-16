@@ -17,7 +17,7 @@ require_once plugin_dir_path( __DIR__ ) . '/includes/helpers.php';
  * @return WP_REST_Response
  */
 function get_order_details( $request ) {
-	$order_id      = intval( $request['order_id'] );
+	$order_id      = absint( $request['order_id'] );
 	$billing_email = sanitize_email( $request['billing_email'] );
 
 	if ( ! $order_id || ! $billing_email ) {

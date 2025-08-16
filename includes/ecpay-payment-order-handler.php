@@ -15,7 +15,7 @@ function create_ecpay_payment_order( $request ) {
 	$payment_helper = new Wooecpay_Payment_Helper();
 
 	// 檢查訂單是否存在
-	$order_id = intval( $request->get_param( 'order_id' ) ); // 加上清理輸入資料
+	$order_id = absint( $request->get_param( 'order_id' ) );
 	$order    = wc_get_order( $order_id );
 	if ( ! $order ) {
 		create_rest_response( 'order_not_found', '找不到訂單', 404 );
@@ -44,7 +44,7 @@ function create_ecpay_payment_order( $request ) {
 
 	// 紀錄訂單其他資訊
 	$order->update_meta_data( '_wooecpay_payment_order_prefix', get_option( 'wooecpay_payment_order_prefix' ) ); // 前綴
-	$order->update_meta_data( '_wooecpay_payment_merchant_trade_no', $merchant_trade_no ); //MerchantTradeNo
+	$order->update_meta_data( '_wooecpay_payment_merchant_trade_no', $merchant_trade_no ); // MerchantTradeNo
 	$order->update_meta_data( '_wooecpay_query_trade_tag', 0 );
 
 	// 防止 hook 重複執行導致訂單歷程重複寫入
