@@ -14,6 +14,7 @@ class WC_Store_Checkout {
 		add_filter( 'rest_post_dispatch', array( $this, 'add_cvs_meta_data_to_draft_checkout_response' ), 10, 3 );
 		add_action( 'woocommerce_store_api_checkout_update_order_from_request', array( $this, 'headless_validate_order_fields' ), 10, 2 );
 		add_action( 'woocommerce_store_api_checkout_update_order_from_request', array( $this, 'headless_save_ecpay_logistic_fields' ), 10, 2 );
+		add_action( 'woocommerce_store_api_checkout_order_processed', array( $this, 'send_new_order_email' ), 10, 1 );
 	}
 
 	/**
@@ -161,4 +162,23 @@ class WC_Store_Checkout {
 		}
 	}
 
+	/**
+	 * 發送新訂單的通知電子郵件。
+	 *
+	 * 在處理新訂單成立時，觸發寄送新訂單通知信。
+	 *
+	 * @param WC_Order $order 要發送電子郵件的 WooCommerce 訂單物件。
+	 *
+	 * @return void
+	 */
+	function send_new_order_email( $order ) {
+		$mailer = WC()->mailer();
+		$mails  = $mailer->get_emails();
+
+		$order_id = $order->get_id();
+
+		if ( ! empty( $mails['WC_Email_New_Order'] ) ) {
+			$mails['WC_Email_New_Order']->trigger( $order_id );
+		}
+	}
 }
