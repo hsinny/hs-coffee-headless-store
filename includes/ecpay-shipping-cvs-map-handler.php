@@ -20,7 +20,7 @@ use Helpers\Logistic\Wooecpay_Logistic_Helper;
  * @return WP_REST_Response
  */
 function generate_ecpay_map_form_for_headless( $request ) {
-	$order_id        = intval( $request->get_param( 'order_id' ) );
+	$order_id        = absint( $request['order_id'] );
 	$order           = wc_get_order( $order_id );
 	$client_back_url = $request->get_param( 'client_back_url' );
 

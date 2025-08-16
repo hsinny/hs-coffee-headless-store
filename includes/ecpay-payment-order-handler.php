@@ -15,7 +15,7 @@ function create_ecpay_payment_order( $request ) {
 	$payment_helper = new Wooecpay_Payment_Helper();
 
 	// 檢查訂單是否存在
-	$order_id = intval( $request->get_param( 'order_id' ) ); // 加上清理輸入資料
+	$order_id = absint( $request->get_param( 'order_id' ) );
 	$order    = wc_get_order( $order_id );
 	if ( ! $order ) {
 		create_rest_response( 'order_not_found', '找不到訂單', 404 );

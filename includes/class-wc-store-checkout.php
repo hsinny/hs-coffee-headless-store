@@ -92,7 +92,7 @@ class WC_Store_Checkout {
 	 */
 	function headless_validate_order_fields( $order, $request ) {
 		$payload  = $request->get_json_params();
-		$order_id = intval( $request->get_param( 'order_id' ) ); // 加上清理輸入資料 check 是否需要
+		$order_id = absint( $request->get_param( 'order_id' ) );
 		$order    = wc_get_order( $order_id );
 		if ( ! $order ) {
 			throw new RouteException( 'headless_order_not_found', '找不到訂單', 404 );
