@@ -54,6 +54,8 @@ function get_order_additional_info( $request ) {
  */
 function fetch_order_data( $order_id, $request ) {
 	$controller = new WC_REST_Orders_Controller();
+	// 需建立一個 WP_REST_Request 物件，再設定參數，才不會 Error
+	$request = new WP_REST_Request( 'GET' );
 	$request->set_param( 'id', $order_id );
 	$response = $controller->get_item( $request );
 
