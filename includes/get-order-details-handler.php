@@ -34,6 +34,10 @@ function get_order_details( $request ) {
 
 	$response_data = fetch_woo_store_order( $order_id, $order_key, $billing_email );
 
+	if ( is_wp_error( $response_data ) ) {
+		return $response_data; // WordPress REST API 會自動輸出錯誤格式
+	}
+
 	if ( is_null( $response_data ) ) {
 		return create_rest_response( 'order_fetch_failed', '無法取得訂單詳細資訊', 500 );
 	}
@@ -54,26 +58,41 @@ function get_order_details( $request ) {
  * @return array|null 如果回應有效，則返回包含訂單詳細資訊的關聯陣列；否則返回 null。
  */
 function fetch_woo_store_order( $order_id, $order_key, $billing_email ) {
-	$response = wp_remote_get( site_url( '/wp-json/wc/store/v1/order/' . $order_id . '?key=' . $order_key . '&billing_email=' . $billing_email ) );
-
-	// Handle HTTP errors
-	if ( is_wp_error( $response ) ) {
-		return null;
-	}
-
+	$response    = wp_remote_get( site_url( '/wp-json/wc/store/v1/order/' . $order_id . '?key=' . $order_key . '&billing_email=' . $billing_email ) );
 	$status_code = wp_remote_retrieve_response_code( $response );
-	if ( $status_code !== 200 ) {
-		return null;
+	$body        = wp_remote_retrieve_body( $response );
+	$body_data   = json_decode( $body, true );
+
+	// Handle HTTP errors（例如無法連線）
+	if ( is_wp_error( $response ) ) {
+		return new WP_Error(
+			$body_data['code'] ?? 'headless_store_api_request_failed',
+			$body_data['message'] ?? '無法呼叫內部 WooCommerce Store API: ' . $response->get_error_message(),
+			array(
+				'status' => $status_code,
+			),
+		);
 	}
 
-	$data = json_decode( wp_remote_retrieve_body( $response ), true );
+	// 非 2xx 狀態碼
+	if ( $status_code < 200 || $status_code >= 300 ) {
+		// eg. { code: string, message: string, data: { status: number } }
+		return new WP_Error(
+			$body_data['code'] ?? 'headless_store_api_error',
+			$body_data['message'] ?? '未知錯誤',
+			array(
+				'status' => $status_code,
+			),
+		);
+	}
 
 	// Validate response structure
-	if ( ! is_array( $data ) ) {
+	if ( ! is_array( $body_data ) ) {
 		return null;
 	}
 
-	return $data;
+	// 正常情況下回傳 JSON
+	return $body_data;
 }
 
 /**
@@ -87,6 +106,9 @@ function fetch_woo_store_order( $order_id, $order_key, $billing_email ) {
  * @throws Exception 若取得訂單詳情時發生問題。
  */
 function get_order_additional_details( $order_id, $request ) {
+	// 需建立一個 WP_REST_Request 物件，再設定參數，才不會 Error
+	$request = new WP_REST_Request( 'GET' );
+
 	$controller = new WC_REST_Orders_Controller();
 	$request->set_param( 'id', $order_id );
 	$response = $controller->get_item( $request );
