@@ -21,13 +21,21 @@ function get_order_details( $request ) {
 	$billing_email = sanitize_email( $request['billing_email'] );
 
 	if ( ! $order_id || ! $billing_email ) {
-		return create_rest_response( 'missing_params', '請提供正確的欄位資料', 400 );
+		return new WP_Error(
+			'headless_missing_params',
+			'請提供訂單編號與訂購Email',
+			array( 'status' => 400 )
+		);
 	}
 
 	$order = wc_get_order( $order_id );
 
 	if ( ! $order ) {
-		return create_rest_response( 'order_not_found', '找不到訂單', 404 );
+		return new WP_Error(
+			'headless_order_not_found',
+			'找不到訂單，請確認輸入的訂單編號',
+			array( 'status' => 404 )
+		);
 	}
 
 	$order_key = $order->get_order_key();
@@ -39,7 +47,11 @@ function get_order_details( $request ) {
 	}
 
 	if ( is_null( $response_data ) ) {
-		return create_rest_response( 'order_fetch_failed', '無法取得訂單詳細資訊', 500 );
+		return new WP_Error(
+			'headless_order_fetch_failed',
+			'無法取得訂單詳細資訊',
+			array( 'status' => 500 )
+		);
 	}
 
 	$additional_data = get_order_additional_details( $order_id, $request );
