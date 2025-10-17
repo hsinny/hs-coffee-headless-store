@@ -1,0 +1,29 @@
+name: Deploy Plugin to A2 Hosting
+
+on: 
+  push: 
+    branches: 
+      - main
+      - develop 
+
+jobs:
+  deploy: 
+    runs-on: ubuntu-latest
+
+    steps: 
+      - name: Checkout Repo 
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0  # 抓完整 commit 歷史，搭配後續的 git push --force
+
+      - name: Setup SSH Key
+        run: |
+          mkdir -p ~/.ssh/
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -p 7822 ${{ secrets.A2_HOSTNAME }} >> ~/.ssh/known_hosts
+      
+      - name: Deploy to A2 Hosting
+        run: |
+          git remote add a2hosting ${{ secrets.DEPLOY_REPO_SSH_URL }}
+          git push a2hosting HEAD:refs/heads/${{ github.ref_name }} --force
