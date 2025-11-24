@@ -73,7 +73,8 @@ class WC_Store_Ecpay_Payment_Order {
 		$item_name         = $this->payment_helper->get_item_name( $order );
 
 		$return_url      = WC()->api_request_url( 'wooecpay_payment_callback', true );
-		$client_back_url = $request->get_param( 'client_back_url' );
+		$client_back_url  = $request->get_param( 'client_back_url' ); // 綠界付款結果頁返回商店按鈕 URL。
+		$order_result_url = $request->get_param( 'order_result_url' ); // 綠界付款結果通知回傳 client 端，由 headless serverless function 處理。
 
 		// 紀錄訂單其他資訊
 		$order->update_meta_data( '_wooecpay_payment_order_prefix', get_option( 'wooecpay_payment_order_prefix' ) ); // 前綴
@@ -115,6 +116,7 @@ class WC_Store_Ecpay_Payment_Order {
 				'EncryptType'       => 1,
 				'ReturnURL'         => $return_url,
 				'ClientBackURL'     => $client_back_url,
+				'OrderResultURL'    => $order_result_url,
 				'PaymentInfoURL'    => $return_url,
 				'NeedExtraPaidInfo' => 'Y',
 			);
