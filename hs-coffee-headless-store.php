@@ -32,16 +32,22 @@ require_once HS_COFFEE_HEADLESS_STORE_PLUGIN_DIR . 'includes/class-wc-order-cust
 
 use HS_Coffee_Headless_Store\WC_Store_Checkout;
 use HS_Coffee_Headless_Store\WC_Store_Payment;
+use HS_Coffee_Headless_Store\WC_Email_Manager;
 use HS_Coffee_Headless_Store\WC_Email_Custom_Footer;
 use HS_Coffee_Headless_Store\WC_Wp_Frontend_Redirect;
 use HS_Coffee_Headless_Store\WC_Store_Flat_Rate_Free_Shipping;
 use HS_Coffee_Headless_Store\WC_Order_Custom_Statuses;
-use HS_Coffee_Headless_Store\WC_Email_Manager;
+
 
 // 等所有外掛都載入後，再執行我方外掛中的初始化邏輯，避免還沒載入其他依賴外掛就去呼叫會出錯的函式
-add_action( 'plugins_loaded', 'init_headless_checkout_hooks' );
+add_action( 'plugins_loaded', 'hs_coffee_headless_store_init' );
 
-function init_headless_checkout_hooks() {
+/**
+ * 初始化 HS Coffee Headless Store 外掛的所有主要類別
+ *
+ * @return void
+ */
+function hs_coffee_headless_store_init() {
 	new WC_Store_Checkout();
 	new WC_Store_Payment(); // 確保掛上 COD 狀態過濾器
 	new WC_Email_Manager(); // 管理自訂 Email 通知信
