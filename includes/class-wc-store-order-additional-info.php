@@ -119,7 +119,7 @@ class WC_Store_Order_Additional_Info {
 		// CVS 運送資訊
 		$shipping_method = reset( $data['shipping_methods'] );
 		if ( $shipping_method && strpos( $shipping_method['method_id'], 'Wooecpay_Logistic_CVS' ) !== false ) {
-			$data['shipping_methods'][0]['cvs_details'] = $this->get_cvs_details( $response_data );
+			$data['shipping_methods'][0]['cvs_details'] = self::get_cvs_details( $response_data );
 		}
 
 		// Payment
@@ -142,7 +142,7 @@ class WC_Store_Order_Additional_Info {
 	 * @param array $response_data WooCommerce 訂單回應資料
 	 * @return array|null
 	 */
-	private function get_cvs_details( $response_data ) {
+	public static function get_cvs_details( $response_data ) {
 		if ( ! $response_data['meta_data'] ) {
 			return;
 		}

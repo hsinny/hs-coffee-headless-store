@@ -147,7 +147,7 @@ function get_order_additional_details( $order_id, $request ) {
 	// CVS 運送方式的詳細資訊
 	$shipping_method = reset( $data['shipping_methods'] );
 	if ( $shipping_method && strpos( $shipping_method['method_id'], 'Wooecpay_Logistic_CVS' ) !== false ) {
-		$data['shipping_methods'][0]['cvs_details'] = get_cvs_details( $response_data );
+		$data['shipping_methods'][0]['cvs_details'] = WC_Store_Order_Additional_Info::get_cvs_details( $response_data );
 	}
 
 	return $data;
