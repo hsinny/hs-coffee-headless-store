@@ -28,6 +28,7 @@ require_once HS_COFFEE_HEADLESS_STORE_PLUGIN_DIR . 'includes/class-wc-email-cust
 require_once HS_COFFEE_HEADLESS_STORE_PLUGIN_DIR . 'includes/class-wp-frontend-redirect.php';
 require_once HS_COFFEE_HEADLESS_STORE_PLUGIN_DIR . 'includes/class-wc-store-flat-rate-free-shipping.php';
 require_once HS_COFFEE_HEADLESS_STORE_PLUGIN_DIR . 'includes/class-wc-store-ecpay-payment-order.php';
+require_once HS_COFFEE_HEADLESS_STORE_PLUGIN_DIR . 'includes/class-wc-store-order-additional-info.php';
 require_once HS_COFFEE_HEADLESS_STORE_PLUGIN_DIR . 'includes/class-wc-order-custom-statuses.php';
 
 use HS_Coffee_Headless_Store\WC_Store_Checkout;
@@ -59,4 +60,7 @@ function hs_coffee_headless_store_init() {
 	// 初始化 ECPay 付款訂單類別並註冊路由
 	$ecpay_payment_order = new WC_Store_Ecpay_Payment_Order();
 	$ecpay_payment_order->register_routes();
+
+	$order_additional_info = new WC_Store_Order_Additional_Info();  // for Order Received Page
+	$order_additional_info->register_routes();
 }

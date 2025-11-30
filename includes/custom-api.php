@@ -12,13 +12,11 @@ if ( ! in_array( 'ecpay-ecommerce-for-woocommerce/ecpay-ecommerce-for-woocommerc
 
 // 匯入處理函式
 require_once plugin_dir_path( __FILE__ ) . 'ecpay-shipping-cvs-map-handler.php';
-require_once plugin_dir_path( __FILE__ ) . 'get-order-additional-info-handler.php';
 require_once plugin_dir_path( __FILE__ ) . 'get-order-details-handler.php';
 require_once plugin_dir_path( __DIR__ ) . '/includes/helpers.php';
 
 add_action( 'rest_api_init', 'configure_cors_headers', 15 );
 add_action( 'rest_api_init', 'register_ecpay_shipping_cvs_map_endpoint' );
-add_action( 'rest_api_init', 'register_get_order_additional_info_endpoint' );
 add_action( 'rest_api_init', 'register_get_order_details_endpoint' );
 
 function configure_cors_headers() {
@@ -55,21 +53,6 @@ function register_ecpay_shipping_cvs_map_endpoint() {
 		)
 	);
 }
-
-function register_get_order_additional_info_endpoint() {
-	register_rest_route(
-		'wc/custom/v1',
-		'/order-additional-info/(?P<order_id>[\d]+)',
-		array(
-			'methods'             => 'GET',
-			'callback'            => 'get_order_additional_info',
-			'permission_callback' => function () {
-				return current_user_can( 'manage_woocommerce' ); // 限制存取，需帶金鑰
-			},
-		)
-	);
-}
-
 
 function register_get_order_details_endpoint() {
 	register_rest_route(
