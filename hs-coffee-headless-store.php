@@ -23,6 +23,7 @@ define( 'HS_COFFEE_HEADLESS_STORE_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 require_once HS_COFFEE_HEADLESS_STORE_PLUGIN_DIR . 'includes/custom-api.php';
 require_once HS_COFFEE_HEADLESS_STORE_PLUGIN_DIR . 'includes/class-wc-store-checkout.php';
 require_once HS_COFFEE_HEADLESS_STORE_PLUGIN_DIR . 'includes/class-wc-store-payment.php';
+require_once HS_COFFEE_HEADLESS_STORE_PLUGIN_DIR . 'includes/class-wc-email-manager.php';
 require_once HS_COFFEE_HEADLESS_STORE_PLUGIN_DIR . 'includes/class-wc-email-custom-footer.php';
 require_once HS_COFFEE_HEADLESS_STORE_PLUGIN_DIR . 'includes/class-wp-frontend-redirect.php';
 require_once HS_COFFEE_HEADLESS_STORE_PLUGIN_DIR . 'includes/class-wc-store-flat-rate-free-shipping.php';
@@ -35,6 +36,7 @@ use HS_Coffee_Headless_Store\WC_Email_Custom_Footer;
 use HS_Coffee_Headless_Store\WC_Wp_Frontend_Redirect;
 use HS_Coffee_Headless_Store\WC_Store_Flat_Rate_Free_Shipping;
 use HS_Coffee_Headless_Store\WC_Order_Custom_Statuses;
+use HS_Coffee_Headless_Store\WC_Email_Manager;
 
 // 等所有外掛都載入後，再執行我方外掛中的初始化邏輯，避免還沒載入其他依賴外掛就去呼叫會出錯的函式
 add_action( 'plugins_loaded', 'init_headless_checkout_hooks' );
@@ -42,6 +44,7 @@ add_action( 'plugins_loaded', 'init_headless_checkout_hooks' );
 function init_headless_checkout_hooks() {
 	new WC_Store_Checkout();
 	new WC_Store_Payment(); // 確保掛上 COD 狀態過濾器
+	new WC_Email_Manager(); // 管理自訂 Email 通知信
 	new WC_Email_Custom_Footer(); // 啟用自訂 Email 佔位符
 	new WC_Wp_Frontend_Redirect(); // 前台訪問控制：只允許管理員訪問 WP 前台
 	new WC_Store_Flat_Rate_Free_Shipping();
