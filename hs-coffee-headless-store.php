@@ -29,6 +29,7 @@ require_once HS_COFFEE_HEADLESS_STORE_PLUGIN_DIR . 'includes/class-wp-frontend-r
 require_once HS_COFFEE_HEADLESS_STORE_PLUGIN_DIR . 'includes/class-wc-store-flat-rate-free-shipping.php';
 require_once HS_COFFEE_HEADLESS_STORE_PLUGIN_DIR . 'includes/class-wc-store-ecpay-payment-order.php';
 require_once HS_COFFEE_HEADLESS_STORE_PLUGIN_DIR . 'includes/class-wc-store-order-additional-info.php';
+require_once HS_COFFEE_HEADLESS_STORE_PLUGIN_DIR . 'includes/class-wc-store-custom-order-details.php';
 require_once HS_COFFEE_HEADLESS_STORE_PLUGIN_DIR . 'includes/class-wc-order-custom-statuses.php';
 
 use HS_Coffee_Headless_Store\WC_Store_Checkout;
@@ -38,6 +39,7 @@ use HS_Coffee_Headless_Store\WC_Email_Custom_Footer;
 use HS_Coffee_Headless_Store\WC_Wp_Frontend_Redirect;
 use HS_Coffee_Headless_Store\WC_Store_Flat_Rate_Free_Shipping;
 use HS_Coffee_Headless_Store\WC_Order_Custom_Statuses;
+use HS_Coffee_Headless_Store\WC_Store_Custom_Order_Details;
 
 
 // 等所有外掛都載入後，再執行我方外掛中的初始化邏輯，避免還沒載入其他依賴外掛就去呼叫會出錯的函式
@@ -63,4 +65,7 @@ function hs_coffee_headless_store_init() {
 
 	$order_additional_info = new WC_Store_Order_Additional_Info();  // for Order Received Page
 	$order_additional_info->register_routes();
+
+	$order_details = new WC_Store_Custom_Order_Details();  // for Inquiry Order Page
+	$order_details->register_routes();
 }
