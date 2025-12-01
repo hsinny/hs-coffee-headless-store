@@ -12,6 +12,9 @@ class WC_Order_Custom_Statuses {
 
 		// 將狀態加入 WooCommerce 訂單狀態列表
 		add_filter( 'wc_order_statuses', array( $this, 'add_custom_order_statuses' ) );
+
+		// 監聽訂單狀態變更，記錄狀態變更時間
+		add_action( 'woocommerce_order_status_changed', array( $this, 'save_status_change_date' ), 10, 4 );
 	}
 
 	/**
@@ -55,7 +58,7 @@ class WC_Order_Custom_Statuses {
 	 * 並確保它們顯示在「已處理」狀態之後
 	 *
 	 * @param array $order_statuses 現有的訂單狀態列表
-	 * @return array 更新後的訂單狀態列表
+	 * @return array                更新後的訂單狀態列表
 	 */
 	public function add_custom_order_statuses( $statuses ) {
 		$new_statuses = array(
@@ -63,5 +66,25 @@ class WC_Order_Custom_Statuses {
 			'wc-shipped'   => '已出貨',
 		);
 		return array_merge( $statuses, $new_statuses );
+	}
+
+	/**
+	 * 記錄自訂訂單狀態變更時間
+	 *
+	 * 當訂單狀態變更為自訂狀態時，記錄變更時間到訂單 meta 資料
+	 * 目前實作：備貨中 (preparing) 狀態變更時間
+	 *
+	 * @param int      $order_id
+	 * @param string   $old_status
+	 * @param string   $new_status
+	 * @param WC_Order $order
+	 * @return void
+	 */
+	public function save_status_change_date( $order_id, $old_status, $new_status, $order ) {
+		// 如果新狀態是「備貨中」，記錄變更時間
+		if ( 'preparing' === $new_status ) {
+			$order->update_meta_data( '_status_preparing_date', current_time( 'mysql' ) );
+			$order->save_meta_data();
+		}
 	}
 }
