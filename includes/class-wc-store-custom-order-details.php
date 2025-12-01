@@ -159,6 +159,8 @@ class WC_Store_Custom_Order_Details {
 
 		$response_data = $response->get_data();
 
+		$order = wc_get_order( $order_id );
+
 		$data = array(
 			'number'           => $response_data['number'],
 			'customer_id'      => $response_data['customer_id'],
@@ -167,6 +169,7 @@ class WC_Store_Custom_Order_Details {
 			'date_created'     => $response_data['date_created'],
 			'date_paid'        => $response_data['date_paid'],
 			'date_completed'   => $response_data['date_completed'],
+			'date_preparing'   => $this->get_preparing_date( $order ),
 			'refunds'          => $response_data['refunds'],
 			'shipping_methods' => $this->map_shipping_methods( $response_data['shipping_lines'] ),
 			'payment_method'   => $this->map_payment_method( $response_data ),
@@ -210,5 +213,25 @@ class WC_Store_Custom_Order_Details {
 			'method_id'    => $response_data['payment_method'],
 			'method_title' => $response_data['payment_method_title'],
 		);
+	}
+
+	/**
+	 * 取得備貨中狀態變更時間。
+	 *
+	 * @param WC_Order|false $order
+	 * @return string 備貨中狀態變更時間（ISO 8601 格式），如果不存在則返回空字串。
+	 */
+	private function get_preparing_date( $order ) {
+		if ( ! $order ) {
+			return '';
+		}
+
+		$preparing_date_raw = $order->get_meta( '_status_preparing_date' );
+		if ( empty( $preparing_date_raw ) ) {
+			return '';
+		}
+
+		// 使用 WooCommerce 內建方法處理日期格式，與其他日期欄位保持一致
+		return wc_rest_prepare_date_response( wc_string_to_datetime( $preparing_date_raw ), false );
 	}
 }
