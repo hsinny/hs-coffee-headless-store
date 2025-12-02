@@ -28,6 +28,8 @@ class WC_Email_Manager {
 	public function register_email_classes( $emails ) {
 		$emails['WC_Email_Customer_Preparing_Order'] = include HS_COFFEE_HEADLESS_STORE_PLUGIN_DIR . 'includes/class-wc-email-customer-preparing-order.php';
 
+		$emails['WC_Email_Customer_Shipped_Order'] = include HS_COFFEE_HEADLESS_STORE_PLUGIN_DIR . 'includes/class-wc-email-customer-shipped-order.php';
+
 		return $emails;
 	}
 
@@ -39,6 +41,7 @@ class WC_Email_Manager {
 	 */
 	public function add_email_actions( $actions ) {
 		$actions[] = 'woocommerce_order_status_processing_to_preparing'; // 處理中 => 備貨中
+		$actions[] = 'woocommerce_order_status_preparing_to_shipped';    // 備貨中 => 已出貨
 
 		return $actions;
 	}
