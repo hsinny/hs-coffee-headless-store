@@ -86,5 +86,10 @@ class WC_Order_Custom_Statuses {
 			$order->update_meta_data( '_status_preparing_date', current_time( 'mysql' ) );
 			$order->save_meta_data();
 		}
+
+		if ( 'shipped' === $new_status ) {
+			$order->update_meta_data( '_status_shipped_date', current_time( 'mysql' ) );
+			$order->save_meta_data();
+		}
 	}
 }
