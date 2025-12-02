@@ -170,6 +170,7 @@ class WC_Store_Custom_Order_Details {
 			'date_paid'        => $response_data['date_paid'],
 			'date_completed'   => $response_data['date_completed'],
 			'date_preparing'   => $this->get_preparing_date( $order ),
+			'date_shipped'     => $this->get_status_updated_date( $order, 'shipped' ),
 			'refunds'          => $response_data['refunds'],
 			'shipping_methods' => $this->map_shipping_methods( $response_data['shipping_lines'] ),
 			'payment_method'   => $this->map_payment_method( $response_data ),
@@ -213,6 +214,28 @@ class WC_Store_Custom_Order_Details {
 			'method_id'    => $response_data['payment_method'],
 			'method_title' => $response_data['payment_method_title'],
 		);
+	}
+
+	/**
+	 * 取得指定訂單狀態的變更時間。
+	 *
+	 * 根據傳入的狀態，從訂單 meta 中查詢對應的變更時間，
+	 *
+	 * @param WC_Order|false $order  WooCommerce 訂單物件
+	 * @param string         $status 狀態代碼（如 'shipped', 'preparing'）
+	 * @return string                狀態的變更時間（ISO 8601 格式，與 WooCommerce REST API 一致），若無對應資料則為空字串
+	 */
+	private function get_status_updated_date( $order, $status ) {
+		if ( ! $order ) {
+			return '';
+		}
+
+		$status_updated_date_raw = $order->get_meta( '_status_' . $status . '_date' );
+		if ( empty( $status_updated_date_raw ) ) {
+			return '';
+		}
+
+		return wc_rest_prepare_date_response( wc_string_to_datetime( $status_updated_date_raw ), false );
 	}
 
 	/**
