@@ -21,6 +21,7 @@ define( 'HS_COFFEE_HEADLESS_STORE_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 
 // 載入外掛功能
 require_once HS_COFFEE_HEADLESS_STORE_PLUGIN_DIR . 'includes/custom-api.php';
+require_once HS_COFFEE_HEADLESS_STORE_PLUGIN_DIR . 'includes/class-wc-store-cors.php';
 require_once HS_COFFEE_HEADLESS_STORE_PLUGIN_DIR . 'includes/class-wc-store-checkout.php';
 require_once HS_COFFEE_HEADLESS_STORE_PLUGIN_DIR . 'includes/class-wc-store-payment.php';
 require_once HS_COFFEE_HEADLESS_STORE_PLUGIN_DIR . 'includes/class-wc-email-manager.php';
@@ -33,6 +34,7 @@ require_once HS_COFFEE_HEADLESS_STORE_PLUGIN_DIR . 'includes/class-wc-store-orde
 require_once HS_COFFEE_HEADLESS_STORE_PLUGIN_DIR . 'includes/class-wc-store-custom-order-details.php';
 require_once HS_COFFEE_HEADLESS_STORE_PLUGIN_DIR . 'includes/class-wc-order-custom-statuses.php';
 
+use HS_Coffee_Headless_Store\WC_Store_CORS;
 use HS_Coffee_Headless_Store\WC_Store_Checkout;
 use HS_Coffee_Headless_Store\WC_Store_Payment;
 use HS_Coffee_Headless_Store\WC_Email_Manager;
@@ -53,6 +55,7 @@ add_action( 'plugins_loaded', 'hs_coffee_headless_store_init' );
  * @return void
  */
 function hs_coffee_headless_store_init() {
+	new WC_Store_CORS();
 	new WC_Store_Checkout();
 	new WC_Store_Payment(); // 確保掛上 COD 狀態過濾器
 	new WC_Email_Manager(); // 管理自訂 Email 通知信
