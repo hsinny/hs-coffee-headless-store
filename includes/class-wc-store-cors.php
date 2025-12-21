@@ -19,6 +19,9 @@ class WC_Store_CORS {
 		// 允許 headless 站台的 origin 存取 Store API
 		add_filter( 'allowed_http_origin', array( $this, 'allow_headless_site_origin' ), 10, 2 );
 		add_filter( 'allowed_http_origins', array( $this, 'add_headless_site_to_allowed_origins' ), 10, 1 );
+
+		// 確保 Nonce header 被 expose，讓 headless 站台可以讀取
+		add_filter( 'rest_exposed_cors_headers', array( $this, 'expose_nonce_header' ), 10, 1 );
 	}
 
 	/**
@@ -67,6 +70,22 @@ class WC_Store_CORS {
 		}
 
 		return $origins;
+	}
+
+	/**
+	 * 確保 Nonce header 被 expose 在 CORS 響應中
+	 *
+	 * @param array $exposed_headers 目前被 expose 的 headers
+	 * @return array
+	 *
+	 * 參考來源：WooCommerce Store API Authentication.php 的 exposed_cors_headers()
+	 * 預設只 expose Cart-Token，不會 expose Nonce。
+	 */
+	public function expose_nonce_header( $exposed_headers ) {
+		if ( ! in_array( 'Nonce', $exposed_headers, true ) ) {
+			$exposed_headers[] = 'Nonce';
+		}
+		return $exposed_headers;
 	}
 
 	/**
