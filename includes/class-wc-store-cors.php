@@ -16,6 +16,57 @@ class WC_Store_CORS {
 	public function __construct() {
 		// 設定 CORS headers（優先級 15，確保在 WooCommerce Store API 之後執行）
 		add_action( 'rest_api_init', array( $this, 'configure_cors_headers' ), 15 );
+		// 允許 headless 站台的 origin 存取 Store API
+		add_filter( 'allowed_http_origin', array( $this, 'allow_headless_site_origin' ), 10, 2 );
+		add_filter( 'allowed_http_origins', array( $this, 'add_headless_site_to_allowed_origins' ), 10, 1 );
+	}
+
+	/**
+	 * 取得 headless 站台的 domain
+	 *
+	 * @return string|null 如果環境常數有效則返回 domain，否則返回 null
+	 */
+	private function get_headless_domain() {
+		$env_constants = get_site_env_constants();
+
+		if ( ! is_array( $env_constants ) || empty( $env_constants['HEADLESS_SITE_DOMAIN'] ) ) {
+			return null;
+		}
+
+		return $env_constants['HEADLESS_SITE_DOMAIN'];
+	}
+
+	/**
+	 * 允許 headless 站台的 origin 存取 Store API
+	 *
+	 * @param string $origin 請求的 origin
+	 * @param string $origin_arg 原始 origin 參數
+	 * @return string
+	 */
+	public function allow_headless_site_origin( $origin, $origin_arg ) {
+		$headless_domain = $this->get_headless_domain();
+
+		if ( $headless_domain && $origin === $headless_domain ) {
+			return $origin;
+		}
+
+		return $origin_arg;
+	}
+
+	/**
+	 * 將 headless 站台加入允許的 origins 列表
+	 *
+	 * @param array $origins 允許的 origins 列表
+	 * @return array
+	 */
+	public function add_headless_site_to_allowed_origins( $origins ) {
+		$headless_domain = $this->get_headless_domain();
+
+		if ( $headless_domain && ! in_array( $headless_domain, $origins, true ) ) {
+			$origins[] = $headless_domain;
+		}
+
+		return $origins;
 	}
 
 	/**
