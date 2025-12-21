@@ -8,16 +8,16 @@ if ( ! defined( 'ABSPATH' ) ) {
 require_once plugin_dir_path( __DIR__ ) . '/includes/helpers.php';
 
 /**
- * Headless 站台 CORS 處理類別
- *
- * 負責設定 CORS headers 以允許 headless 站台存取 REST API 和自訂 API route
+ * 負責設定 CORS headers 以允許 headless 站台存取 REST API 和自訂 API route。
  */
 class WC_Store_CORS {
 	public function __construct() {
-		// 設定 CORS headers（優先級 15，確保在 WooCommerce Store API 之後執行）
+		// 處理所有 REST API 請求的 CORS headers（優先級 15，確保在 WooCommerce Store API 之後執行）
 		add_action( 'rest_api_init', array( $this, 'configure_cors_headers' ), 15 );
+		
 		// 允許 headless 站台的 origin 存取 Store API
 		add_filter( 'allowed_http_origin', array( $this, 'allow_headless_site_origin' ), 10, 2 );
+		// 將 headless 站台加入允許的 origins 列表
 		add_filter( 'allowed_http_origins', array( $this, 'add_headless_site_to_allowed_origins' ), 10, 1 );
 
 		// 確保 Nonce header 被 expose，讓 headless 站台可以讀取
@@ -42,9 +42,11 @@ class WC_Store_CORS {
 	/**
 	 * 允許 headless 站台的 origin 存取 Store API
 	 *
+	 * 相關檔案：Authentication.php send_cors_headers() 檢查 is_allowed_http_origin($origin)
+	 * 
 	 * @param string $origin 請求的 origin
 	 * @param string $origin_arg 原始 origin 參數
-	 * @return string
+	 * @return string 如果 origin 是 headless 站台則返回 origin，否則返回原始值
 	 */
 	public function allow_headless_site_origin( $origin, $origin_arg ) {
 		$headless_domain = $this->get_headless_domain();
@@ -59,8 +61,10 @@ class WC_Store_CORS {
 	/**
 	 * 將 headless 站台加入允許的 origins 列表
 	 *
+	 * 相關檔：wp-includes/http.php 的 get_allowed_http_origins()
+	 *
 	 * @param array $origins 允許的 origins 列表
-	 * @return array
+	 * @return array 更新後的 origins 列表
 	 */
 	public function add_headless_site_to_allowed_origins( $origins ) {
 		$headless_domain = $this->get_headless_domain();
@@ -75,11 +79,11 @@ class WC_Store_CORS {
 	/**
 	 * 確保 Nonce header 被 expose 在 CORS 響應中
 	 *
-	 * @param array $exposed_headers 目前被 expose 的 headers
-	 * @return array
+	 * 相關檔案：WooCommerce Store API Authentication.php 的 exposed_cors_headers() 預設只有 expose 'Cart-Token' 
+	 * 讓 'Nonce' 被 expose，加入到 Access-Control-Expose-Headers 中，避免瀏覽器阻擋 JS 讀取該 header。
 	 *
-	 * 參考來源：WooCommerce Store API Authentication.php 的 exposed_cors_headers()
-	 * 預設只 expose Cart-Token，不會 expose Nonce。
+	 * @param array $exposed_headers 目前被 expose 的 headers
+	 * @return array 更新後的 exposed headers 列表，包含 'Nonce'
 	 */
 	public function expose_nonce_header( $exposed_headers ) {
 		if ( ! in_array( 'Nonce', $exposed_headers, true ) ) {
@@ -91,19 +95,25 @@ class WC_Store_CORS {
 	/**
 	 * 設定 CORS headers
 	 *
-	 * 移除預設的 CORS headers，針對 REST API 和自訂 API route 設定 CORS (除了 WooCommerce Store API)
-	 * WooCommerce Store API 會自己處理 CORS
+	 * 移除預設的 CORS headers，針對 REST API 和自訂 API route 設定 CORS (Store API 會自己處理 CORS)
 	 */
 	public function configure_cors_headers() {
 		// 移除 WordPress 預設 Rest API 的 CORS headers
+		// 相關檔案：wp-includes/rest-api.php 的 rest_send_cors_headers()
 		remove_filter( 'rest_pre_serve_request', 'rest_send_cors_headers' );
 
-		// 針對 REST API 和自訂 API route 設定 CORS headers (除了 WooCommerce Store API)
+		// 針對非 Store API 的 routes 設定 CORS headers
 		add_filter( 'rest_pre_serve_request', array( $this, 'handle_cors_headers' ), 10, 4 );
 	}
 
 	/**
-	 * 處理 CORS headers 的 callback
+	 * 處理所有 REST API 請求的 CORS headers
+	 * 
+	 * 處理邏輯：
+	 * 1. Store API routes (/wc/store/) 由 WooCommerce 的 Authentication::send_cors_headers() 處理
+	 * 2. 其他 routes（WordPress REST API 和自訂 API）由本方法處理
+	 * 3. 設定 Vary: Origin header 確保快取系統正確處理不同 origin 的請求
+	 * 4. 只允許 headless 站台的 origin 設定 CORS headers
 	 *
 	 * @param bool             $value 是否繼續處理請求
 	 * @param WP_REST_Response $result REST API 回應
@@ -114,19 +124,23 @@ class WC_Store_CORS {
 	public function handle_cors_headers( $value, $result, $request, $server ) {
 		$route = $request->get_route();
 
-		// WooCommerce Store API（/wc/store/ 開頭）讓預設流程處理，已自帶 CORS 支援
+		// Store API routes 讓預設流程處理，已自帶 CORS 支援
 		if ( strpos( $route, '/wc/store/' ) === 0 ) {
 			return $value;
 		}
 
-			// 針對 REST API 和自訂 API route 設定 CORS
-			$origin          = get_http_origin();
-			$headless_domain = $this->get_headless_domain();
+		// 處理其他 routes（WordPress REST API 和自訂 API）
+		$origin          = get_http_origin();
+		$headless_domain = $this->get_headless_domain();
 
 		// 檢查環境常數是否有效
 		if ( ! $headless_domain ) {
 			return $value;
 		}
+
+		// 關鍵：無論是否有 origin，都要設定 Vary: Origin
+		// 相關檔案：WooCommerce Store API Authentication::send_cors_headers()
+		$server->send_header( 'Vary', 'Origin', false );
 
 		// 僅當 origin 為 headless site domain 時才允許跨域（Access-Control-Allow-*）
 		if ( $origin === $headless_domain ) {
@@ -136,10 +150,7 @@ class WC_Store_CORS {
 			$server->send_header( 'Access-Control-Allow-Headers', 'Authorization, X-WP-Nonce, Content-Type, Cart-Token, Nonce, Content-Disposition, Content-MD5' );
 			$server->send_header( 'Access-Control-Expose-Headers', 'X-WP-Total, X-WP-TotalPages, Link, Cart-Token, Nonce' );
 		}
-			// 關鍵：無論是否有 origin，都要設定 Vary: Origin
-			// 讓快取系統知道要根據不同的 origin 快取不同的版本
-			$server->send_header( 'Vary', 'Origin', false );
 
-			return $value;
+		return $value;
 	}
 }
