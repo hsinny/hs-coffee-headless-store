@@ -101,11 +101,16 @@ class WC_Store_CORS {
 		}
 
 			// 針對 REST API 和自訂 API route 設定 CORS
-			$origin        = get_http_origin();
-			$env_constants = get_site_env_constants();
+			$origin          = get_http_origin();
+			$headless_domain = $this->get_headless_domain();
+
+		// 檢查環境常數是否有效
+		if ( ! $headless_domain ) {
+			return $value;
+		}
 
 		// 僅當 origin 為 headless site domain 時才允許跨域（Access-Control-Allow-*）
-		if ( $origin === $env_constants['HEADLESS_SITE_DOMAIN'] ) {
+		if ( $origin === $headless_domain ) {
 			$server->send_header( 'Access-Control-Allow-Origin', esc_url_raw( $origin ) );
 			$server->send_header( 'Access-Control-Allow-Methods', 'OPTIONS, GET, POST, PUT, PATCH, DELETE' );
 			$server->send_header( 'Access-Control-Allow-Credentials', 'true' );
