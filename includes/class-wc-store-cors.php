@@ -12,8 +12,8 @@ require_once plugin_dir_path( __DIR__ ) . '/includes/helpers.php';
  */
 class WC_Store_CORS {
 	public function __construct() {
-		// 處理所有 REST API 請求的 CORS headers（優先級 15，確保在 WooCommerce Store API 之後執行）
-		add_action( 'rest_api_init', array( $this, 'configure_cors_headers' ), 15 );
+		// 處理所有 REST API 請求的 CORS headers（優先級 15，確保在 WooCommerce Store API 之後執行）=> Headless 前台改用 Vercel Proxy 處理 CORS，故不需要該 filter
+		// add_action( 'rest_api_init', array( $this, 'configure_cors_headers' ), 15 );
 		
 		// 允許 headless 站台的 origin 存取 Store API
 		add_filter( 'allowed_http_origin', array( $this, 'allow_headless_site_origin' ), 10, 2 );
@@ -97,14 +97,14 @@ class WC_Store_CORS {
 	 *
 	 * 移除預設的 CORS headers，針對 REST API 和自訂 API route 設定 CORS (Store API 會自己處理 CORS)
 	 */
-	public function configure_cors_headers() {
-		// 移除 WordPress 預設 Rest API 的 CORS headers
-		// 相關檔案：wp-includes/rest-api.php 的 rest_send_cors_headers()
-		remove_filter( 'rest_pre_serve_request', 'rest_send_cors_headers' );
+	// public function configure_cors_headers() {
+	// 	// 移除 WordPress 預設 Rest API 的 CORS headers
+	// 	// 相關檔案：wp-includes/rest-api.php 的 rest_send_cors_headers()
+	// 	remove_filter( 'rest_pre_serve_request', 'rest_send_cors_headers' );
 
-		// 針對非 Store API 的 routes 設定 CORS headers
-		add_filter( 'rest_pre_serve_request', array( $this, 'handle_cors_headers' ), 10, 4 );
-	}
+	// 	// 針對非 Store API 的 routes 設定 CORS headers
+	// 	add_filter( 'rest_pre_serve_request', array( $this, 'handle_cors_headers' ), 10, 4 );
+	// }
 
 	/**
 	 * 處理所有 REST API 請求的 CORS headers
@@ -121,36 +121,36 @@ class WC_Store_CORS {
 	 * @param WP_REST_Server   $server REST API 伺服器
 	 * @return bool
 	 */
-	public function handle_cors_headers( $value, $result, $request, $server ) {
-		$route = $request->get_route();
+	// public function handle_cors_headers( $value, $result, $request, $server ) {
+	// 	$route = $request->get_route();
 
-		// Store API routes 讓預設流程處理，已自帶 CORS 支援
-		if ( strpos( $route, '/wc/store/' ) === 0 ) {
-			return $value;
-		}
+	// 	// Store API routes 讓預設流程處理，已自帶 CORS 支援
+	// 	if ( strpos( $route, '/wc/store/' ) === 0 ) {
+	// 		return $value;
+	// 	}
 
-		// 處理其他 routes（WordPress REST API 和自訂 API）
-		$origin          = get_http_origin();
-		$headless_domain = $this->get_headless_domain();
+	// 	// 處理其他 routes（WordPress REST API 和自訂 API）
+	// 	$origin          = get_http_origin();
+	// 	$headless_domain = $this->get_headless_domain();
 
-		// 檢查環境常數是否有效
-		if ( ! $headless_domain ) {
-			return $value;
-		}
+	// 	// 檢查環境常數是否有效
+	// 	if ( ! $headless_domain ) {
+	// 		return $value;
+	// 	}
 
-		// 關鍵：無論是否有 origin，都要設定 Vary: Origin
-		// 相關檔案：WooCommerce Store API Authentication::send_cors_headers()
-		$server->send_header( 'Vary', 'Origin', false );
+	// 	// 關鍵：無論是否有 origin，都要設定 Vary: Origin
+	// 	// 相關檔案：WooCommerce Store API Authentication::send_cors_headers()
+	// 	$server->send_header( 'Vary', 'Origin', false );
 
-		// 僅當 origin 為 headless site domain 時才允許跨域（Access-Control-Allow-*）
-		if ( $origin === $headless_domain ) {
-			$server->send_header( 'Access-Control-Allow-Origin', esc_url_raw( $origin ) );
-			$server->send_header( 'Access-Control-Allow-Methods', 'OPTIONS, GET, POST, PUT, PATCH, DELETE' );
-			$server->send_header( 'Access-Control-Allow-Credentials', 'true' );
-			$server->send_header( 'Access-Control-Allow-Headers', 'Authorization, X-WP-Nonce, Content-Type, Cart-Token, Nonce, Content-Disposition, Content-MD5' );
-			$server->send_header( 'Access-Control-Expose-Headers', 'X-WP-Total, X-WP-TotalPages, Link, Cart-Token, Nonce' );
-		}
+	// 	// 僅當 origin 為 headless site domain 時才允許跨域（Access-Control-Allow-*）
+	// 	if ( $origin === $headless_domain ) {
+	// 		$server->send_header( 'Access-Control-Allow-Origin', esc_url_raw( $origin ) );
+	// 		$server->send_header( 'Access-Control-Allow-Methods', 'OPTIONS, GET, POST, PUT, PATCH, DELETE' );
+	// 		$server->send_header( 'Access-Control-Allow-Credentials', 'true' );
+	// 		$server->send_header( 'Access-Control-Allow-Headers', 'Authorization, X-WP-Nonce, Content-Type, Cart-Token, Nonce, Content-Disposition, Content-MD5' );
+	// 		$server->send_header( 'Access-Control-Expose-Headers', 'X-WP-Total, X-WP-TotalPages, Link, Cart-Token, Nonce' );
+	// 	}
 
-		return $value;
-	}
+	// 	return $value;
+	// }
 }
